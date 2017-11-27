@@ -1,0 +1,293 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>7-Snakes Challenge</title>
+        <style>
+            header {
+                height: 120px;
+            }
+            body  {
+                text-align:center;
+                height: 100%;
+            }
+            footer {
+                width: 100%;
+                bottom: 0;
+            }
+            output {
+                display: block;
+                /* min-height: 300px; */
+            }
+            table {
+                margin: 0px auto;
+            }
+            td {
+                padding: 10px;
+            }
+            table, td {
+                border: 1px solid black;
+            }
+            #csv_file {
+                margin-bottom:30px;
+            }
+            h3 {
+                display: none;
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <h1>Ascent Software Challenge</h1>
+            <h2>7-Snakes</h2>
+        </header>
+        <main> 
+            <input id="csv_file" type="file"/>
+            <h3 id="success">Found a pair of snakes!!!</h3>
+            <h3 id="fail">FAIL</h3>
+            <output id="output">
+            </output>
+        </main>
+        <footer>
+            <p>Copyright 2017 Marco Reina</p>
+        </footer>
+        <script>
+            const SNAKE_SIZE = 7;
+            var input = [];
+            var snakes = [];
+            var grid = [];
+            var width = 0;
+            var height = 0;
+            var fileInput = document.getElementById("csv_file");
+            
+            //Called when a file is selected
+            fileInput.addEventListener('change', function () {
+                var reader = new FileReader();
+
+                // start reading the file. When it is done, calls the onload event.
+                reader.readAsBinaryString(fileInput.files[0]);
+                
+                reader.onload = function () {
+                    input = getInput(reader.result);
+                    width = input.length;
+                    height = input[0].length;
+                    // grid = getGrid();
+                    populateSnakes();
+                    searchPair();
+                };
+            });
+
+            //Function that will prepare the input read from the csv file
+            function getInput(fileContent) {
+                var result = [];
+                var rows = fileContent.trim().split(/\r?\n|\r/);
+                var count = 0;
+
+                for(var rowIndex = 0; rowIndex < rows.length; rowIndex++){
+                    rows[rowIndex] = rows[rowIndex].split(',');
+                }
+
+                for(var i = 0; i < rows.length; i++) {
+                    result[i] = [];
+                    for(var j = 0; j < rows[i].length; j++) {
+                        // result[i].push(parseInt(rows[i][j]));
+                        result[i].push({value: parseInt(rows[i][j]), position: count++});
+                    }
+                }
+
+                return result;
+            }
+
+            function getGrid(){
+                var grid = [];
+                var count = 0;
+
+                for(var i = 0; i < width; i++){
+                    grid[i] = []
+                    for(var j = 0; j < height; j++) {
+                        grid[i].push({value: input[i][j], position: count++});
+                    }
+                }
+
+                return grid;
+            }
+
+            function populateSnakes() {
+                for(var i = 0; i < width; i++) {
+                    for(var j = 0; j < height; j++) {
+                        findSnakes(i, j, [], 0);
+                    }
+                }
+            }
+
+
+            //Function that will try to find a pair of snakes!
+            function searchPair() {
+                var foundPair = false;
+                var snakeA = {};
+                var snakeB = {};
+
+                findSnakesLoop: 
+                for(var i = 0; i < snakes.length; i++){
+                    for(var j = 0; j < snakes[i].length; j++){
+                        snakeA = snakes[i][j];
+
+                        for(var k = 0; k < snakes.length; k++){
+                            if(i != k){
+                                for(var l = 0; l < snakes[k].length; l++){
+                                    snakeB = snakes[k][l];
+
+                                    if(verifyPosition(snakeA, snakeB)) {
+
+                                        if(compareSnakes(snakeA, snakeB)){
+                                            foundPair = true;
+                                            break findSnakesLoop;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if(foundPair) {
+                    console.log("Found a pair of snakes!");
+                    document.getElementById("success").style.display = "block";
+                    drawSnakes(snakeA, snakeB);
+                }
+                else {
+                    console.log("No pair at all!");
+                    document.getElementById("fail").style.display = "block"
+                }
+            };
+
+            function verifyPosition(snakeA, snakeB) {
+                for(var i = 0; i < snakeA.length; i++) {
+                    for(var j = 0; j < snakeB.length; j++) {
+                        if(snakeA[i].position === snakeB[j].position)
+                            return false;
+                    }   
+                }
+
+                return true;
+            };
+
+            function compareSnakes(snakeA, snakeB) {
+                var aWeight = 0;
+                var bWeight = 0;
+
+                for(var i = 0; i < snakeA.length; i++) {
+                    aWeight += snakeA[i].value;
+                    bWeight += snakeB[i].value;
+                }
+
+                return aWeight === bWeight;
+            };
+
+            function findSnakes(row, col, snake, snakeSize) {
+                var currentCell = input[row][col];
+
+                if(!checkCellValid(row, col, snake))
+                    return;
+
+                snake.push(currentCell);
+                snakeSize++;
+
+                if(snakeSize < SNAKE_SIZE) {
+                    //Up
+                    if(row - 1 >= 0)
+                        findSnakes(row - 1, col, snake, snakeSize);
+
+                    //Right
+                    if(col + 1 < width)
+                        findSnakes(row, col + 1, snake, snakeSize);
+
+                    //Down
+                    if(row + 1 < height)
+                        findSnakes(row + 1, col, snake, snakeSize);
+
+                    //Left
+                    if(col - 1 >= 0)
+                        findSnakes(row, col - 1, snake, snakeSize);
+                }
+                else {
+                    var head = snake[0];
+
+                    if(!snakes[head.position])
+                        snakes[head.position] = [];
+
+                    snakes[head.position].push(snake.slice());
+                }
+
+                snake.pop();
+            }
+
+            function checkCellValid(row, col, growingSnake){
+                var usedChildren = 0;
+
+                for(var i = 0; i < growingSnake.length; i++) {
+                    
+                    var snakePiece = growingSnake[i];
+
+                    //The cell is already part of the snake
+                    if(snakePiece.position === input[row][col].position)
+                        return false;
+                    
+                    //Up
+                    if(row - 1 >= 0 && snakePiece.position === input[row - 1][col].position)
+                        usedChildren++;
+
+                    //Right
+                    if(col + 1 < width && snakePiece.position === input[row][col + 1].position)
+                        usedChildren++
+
+                    //Down
+                    if(row + 1 < height && snakePiece.position === input[row + 1][col].position)
+                        usedChildren++
+
+                    //Left
+                    if(col - 1 >= 0 && snakePiece.position === input[row][col - 1].position)
+                        usedChildren++
+                }
+
+                return usedChildren >= 2 ? false : true;
+            }
+
+            function drawSnakes(snakeA, snakeB) {
+                var output = document.getElementById("output"); 
+                var table = document.createElement("table");
+ 
+                // creating rows
+                for (var i = 0; i < input.length; i++) {
+                    var row = document.createElement("tr");
+                
+                    // create cells in row
+                    for (var j = 0; j < input[0].length; j++) {
+                        var cell = document.createElement("td");
+                        var cellText = document.createTextNode(input[i][j].value);
+                        
+                        cell.setAttribute("id", "cell_" + input[i][j].position);
+                        cell.appendChild(cellText);
+                        row.appendChild(cell);
+                    }
+                    
+                    table.appendChild(row);
+                }
+            
+                output.appendChild(table);
+
+                //Paint snakeA
+                for(var i = 0; i < snakeA.length; i++){
+                    var cell = document.getElementById("cell_" + snakeA[i].position);
+                    cell.style.backgroundColor = "red";
+                }
+
+                //Paint snakeA
+                for(var i = 0; i < snakeB.length; i++){
+                    var cell = document.getElementById("cell_" + snakeB[i].position);
+                    cell.style.backgroundColor = "yellow";
+                }
+            }
+        </script>
+    </body>
+</html>
