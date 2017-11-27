@@ -68,6 +68,7 @@
                 reader.onload = function () {
                     getInput(reader.result);
                     populateSnakes();
+                    console.log(snakes);
                     searchPair();
                 };
             });
@@ -98,37 +99,36 @@
             function populateSnakes() {
                 for(var i = 0; i < width; i++) {
                     for(var j = 0; j < height; j++) {
-                        findSnakes(i, j, [], 0);
+                        findSnakes(i, j, []);
                     }
                 }
             }
 
             //Given a cell, this function finds recursively possible snakes
-            function findSnakes(row, col, snake, snakeSize) {
+            function findSnakes(row, col, snake) {
                 var currentCell = input[row][col];
 
                 if(!checkCellValid(row, col, snake))
                     return;
 
                 snake.push(currentCell);
-                snakeSize++;
 
-                if(snakeSize < SNAKE_SIZE) {
+                if(snake.length < SNAKE_SIZE) {
                     //Up
                     if(row - 1 >= 0)
-                        findSnakes(row - 1, col, snake, snakeSize);
+                        findSnakes(row - 1, col, snake);
 
                     //Right
                     if(col + 1 < width)
-                        findSnakes(row, col + 1, snake, snakeSize);
+                        findSnakes(row, col + 1, snake);
 
                     //Down
                     if(row + 1 < height)
-                        findSnakes(row + 1, col, snake, snakeSize);
+                        findSnakes(row + 1, col, snake);
 
                     //Left
                     if(col - 1 >= 0)
-                        findSnakes(row, col - 1, snake, snakeSize);
+                        findSnakes(row, col - 1, snake);
                 }
                 else {
                     var head = snake[0];
