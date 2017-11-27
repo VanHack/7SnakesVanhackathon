@@ -17,7 +17,6 @@
             }
             output {
                 display: block;
-                /* min-height: 300px; */
             }
             table {
                 margin: 0px auto;
@@ -55,7 +54,6 @@
             const SNAKE_SIZE = 7;
             var input = [];
             var snakes = [];
-            var grid = [];
             var width = 0;
             var height = 0;
             var fileInput = document.getElementById("csv_file");
@@ -68,10 +66,7 @@
                 reader.readAsBinaryString(fileInput.files[0]);
                 
                 reader.onload = function () {
-                    input = getInput(reader.result);
-                    width = input.length;
-                    height = input[0].length;
-                    // grid = getGrid();
+                    getInput(reader.result);
                     populateSnakes();
                     searchPair();
                 };
@@ -79,7 +74,6 @@
 
             //Function that will prepare the input read from the csv file
             function getInput(fileContent) {
-                var result = [];
                 var rows = fileContent.trim().split(/\r?\n|\r/);
                 var count = 0;
 
@@ -88,30 +82,19 @@
                 }
 
                 for(var i = 0; i < rows.length; i++) {
-                    result[i] = [];
+                    input[i] = [];
                     for(var j = 0; j < rows[i].length; j++) {
                         // result[i].push(parseInt(rows[i][j]));
-                        result[i].push({value: parseInt(rows[i][j]), position: count++});
+                        input[i].push({value: parseInt(rows[i][j]), position: count++});
                     }
                 }
-
-                return result;
+                
+                //Dimensions of the matrix
+                width = input.length;
+                height = input[0].length;
             }
 
-            function getGrid(){
-                var grid = [];
-                var count = 0;
-
-                for(var i = 0; i < width; i++){
-                    grid[i] = []
-                    for(var j = 0; j < height; j++) {
-                        grid[i].push({value: input[i][j], position: count++});
-                    }
-                }
-
-                return grid;
-            }
-
+            //For each cell, will find all possible snakes starting from it
             function populateSnakes() {
                 for(var i = 0; i < width; i++) {
                     for(var j = 0; j < height; j++) {
@@ -120,70 +103,7 @@
                 }
             }
 
-
-            //Function that will try to find a pair of snakes!
-            function searchPair() {
-                var foundPair = false;
-                var snakeA = {};
-                var snakeB = {};
-
-                findSnakesLoop: 
-                for(var i = 0; i < snakes.length; i++){
-                    for(var j = 0; j < snakes[i].length; j++){
-                        snakeA = snakes[i][j];
-
-                        for(var k = 0; k < snakes.length; k++){
-                            if(i != k){
-                                for(var l = 0; l < snakes[k].length; l++){
-                                    snakeB = snakes[k][l];
-
-                                    if(verifyPosition(snakeA, snakeB)) {
-
-                                        if(compareSnakes(snakeA, snakeB)){
-                                            foundPair = true;
-                                            break findSnakesLoop;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if(foundPair) {
-                    console.log("Found a pair of snakes!");
-                    document.getElementById("success").style.display = "block";
-                    drawSnakes(snakeA, snakeB);
-                }
-                else {
-                    console.log("No pair at all!");
-                    document.getElementById("fail").style.display = "block"
-                }
-            };
-
-            function verifyPosition(snakeA, snakeB) {
-                for(var i = 0; i < snakeA.length; i++) {
-                    for(var j = 0; j < snakeB.length; j++) {
-                        if(snakeA[i].position === snakeB[j].position)
-                            return false;
-                    }   
-                }
-
-                return true;
-            };
-
-            function compareSnakes(snakeA, snakeB) {
-                var aWeight = 0;
-                var bWeight = 0;
-
-                for(var i = 0; i < snakeA.length; i++) {
-                    aWeight += snakeA[i].value;
-                    bWeight += snakeB[i].value;
-                }
-
-                return aWeight === bWeight;
-            };
-
+            //Given a cell, this function finds recursively possible snakes
             function findSnakes(row, col, snake, snakeSize) {
                 var currentCell = input[row][col];
 
@@ -216,12 +136,15 @@
                     if(!snakes[head.position])
                         snakes[head.position] = [];
 
+                    //Put each snake to the right group
                     snakes[head.position].push(snake.slice());
                 }
 
                 snake.pop();
             }
 
+            //Check if the current cell is already in the 'growingSnake'
+            //And if it wont create a cycle
             function checkCellValid(row, col, growingSnake){
                 var usedChildren = 0;
 
@@ -253,6 +176,72 @@
                 return usedChildren >= 2 ? false : true;
             }
 
+            //Function that will try to find a pair of snakes!
+            function searchPair() {
+                var foundPair = false;
+                var snakeA = {};
+                var snakeB = {};
+
+                findSnakesLoop: 
+                for(var i = 0; i < snakes.length; i++){
+                    for(var j = 0; j < snakes[i].length; j++){
+                        snakeA = snakes[i][j];
+
+                        for(var k = 0; k < snakes.length; k++){
+                            if(i != k){
+                                for(var l = 0; l < snakes[k].length; l++){
+                                    snakeB = snakes[k][l];
+
+                                    if(verifyPosition(snakeA, snakeB)) {
+
+                                        if(compareSnakes(snakeA, snakeB)){
+                                            foundPair = true;
+                                            break findSnakesLoop;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if(foundPair) {
+                    //Found! Draw the solution.
+                    document.getElementById("success").style.display = "block";
+                    drawSnakes(snakeA, snakeB);
+                }
+                else {
+                    //Reveal a sad message
+                    document.getElementById("fail").style.display = "block"
+                }
+            };
+
+            //Check if the snakes aren't overlaping each other
+            function verifyPosition(snakeA, snakeB) {
+                for(var i = 0; i < snakeA.length; i++) {
+                    for(var j = 0; j < snakeB.length; j++) {
+                        if(snakeA[i].position === snakeB[j].position)
+                            return false;
+                    }   
+                }
+
+                return true;
+            };
+
+            //Compare the sum of the snakes
+            function compareSnakes(snakeA, snakeB) {
+                var aWeight = 0;
+                var bWeight = 0;
+
+                for(var i = 0; i < snakeA.length; i++) {
+                    aWeight += snakeA[i].value;
+                    bWeight += snakeB[i].value;
+                }
+
+                return aWeight === bWeight;
+            };
+
+            //Draw the matrix and color the snakes
             function drawSnakes(snakeA, snakeB) {
                 var output = document.getElementById("output"); 
                 var table = document.createElement("table");

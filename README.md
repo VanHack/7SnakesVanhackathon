@@ -19,7 +19,7 @@ To solve the 7-Snake problem the program follow the following steps:
 * Read the csv file and transform into an matrix
 * Begin to explore the matrix from top left corner to bottom right corner.
 * Enumerate each cell from 0 to N * N - 1.
-* Find all possible snakes starting from cell 0 (considering all the restrictions).
+* Find recursively all possible snakes starting from cell 0 (considering all the restrictions).
 * Keep all valid snakes started from 0 in an array in their respective position (index 0).
 * Do this for all other cells, resulting in an array of arrays where in each index we have several snakes started in the cell represented by this index.
 * Finally, compare all the snakes that do not belong to the same group, always ignoring snakes that overlap.
