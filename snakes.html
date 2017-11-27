@@ -91,14 +91,14 @@
                 }
                 
                 //Dimensions of the matrix
-                width = input.length;
-                height = input[0].length;
+                height = input.length;
+                width = input[0].length;
             }
 
             //For each cell, will find all possible snakes starting from it
             function populateSnakes() {
-                for(var i = 0; i < width; i++) {
-                    for(var j = 0; j < height; j++) {
+                for(var i = 0; i < height; i++) {
+                    for(var j = 0; j < width; j++) {
                         findSnakes(i, j, []);
                     }
                 }
